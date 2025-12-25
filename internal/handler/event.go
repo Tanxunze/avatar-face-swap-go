@@ -1,0 +1,42 @@
+package handler
+
+import (
+	"strconv"
+
+	"avatar-face-swap-go/internal/repository"
+	"avatar-face-swap-go/pkg/response"
+
+	"github.com/gin-gonic/gin"
+)
+
+func GetEvent(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+	event, err := repository.GetEventById(id)
+	if err != nil {
+		response.Error(c, 500, "Database error")
+		return
+	}
+
+	if event == nil {
+		response.Error(c, 404, "Event not found")
+		return
+	}
+
+	event.Token = ""
+	response.Success(c, event)
+}
+
+func ListEvents(c *gin.Context) {
+	events, err := repository.GetAllEvents()
+	if err != nil {
+		response.Error(c, 500, "Database error")
+		return
+	}
+
+	response.Success(c, gin.H{"events": events})
+}
