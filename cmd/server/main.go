@@ -16,6 +16,11 @@ import (
 func main() {
 	cfg := config.Load()
 
+	// Set Gin mode based on environment
+	if cfg.IsProduction() {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	if err := database.Init(cfg.DatabaseURL); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
@@ -24,8 +29,9 @@ func main() {
 
 	router := gin.Default()
 
+	// CORS configuration from environment
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://127.0.0.1:5173", "http://localhost:5173"},
+		AllowOrigins:     cfg.GetCORSOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
