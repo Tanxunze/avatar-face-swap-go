@@ -29,6 +29,7 @@ func main() {
 	{
 		api.GET("/events", handler.ListEvents)
 		api.GET("/events/:id", handler.GetEvent)
+		api.POST("/events", handler.CreateEvent)
 	}
 
 	log.Printf("Server starting on :%s", cfg.Port)

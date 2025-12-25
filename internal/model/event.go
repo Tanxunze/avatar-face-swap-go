@@ -8,3 +8,10 @@ type Event struct {
 	IsOpen      bool   `json:"is_open"`
 	Creator     string `json:"creator,omitempty"`
 }
+
+type CreateEventRequest struct {
+	Description string `json:"description" binding:"required"`
+	Token       string `json:"token" binding:"required"`
+	EventDate   string `json:"event_date" binding:"required"`
+	IsOpen      bool   `json:"is_open"`
+}

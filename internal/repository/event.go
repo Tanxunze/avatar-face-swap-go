@@ -56,3 +56,26 @@ func GetAllEvents() ([]model.Event, error) {
 
 	return events, rows.Err()
 }
+
+func CreateEvent(req *model.CreateEventRequest, creator string) (int64, error) {
+	query := `INSERT INTO event (description, token, event_date, is_open, creator) 
+              VALUES (?, ?, ?, ?, ?)`
+	isOpen := 0
+	if req.IsOpen {
+		isOpen = 1
+	}
+
+	result, err := database.DB.Exec(query,
+		req.Description,
+		req.Token,
+		req.EventDate,
+		isOpen,
+		creator,
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.LastInsertId()
+}

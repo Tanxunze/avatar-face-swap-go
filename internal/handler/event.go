@@ -3,6 +3,7 @@ package handler
 import (
 	"strconv"
 
+	"avatar-face-swap-go/internal/model"
 	"avatar-face-swap-go/internal/repository"
 	"avatar-face-swap-go/pkg/response"
 
@@ -39,4 +40,26 @@ func ListEvents(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"events": events})
+}
+
+func CreateEvent(c *gin.Context) {
+	var req model.CreateEventRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, "Invalid request: "+err.Error())
+		return
+	}
+
+	creator := ""
+	id, err := repository.CreateEvent(&req, creator)
+
+	if err != nil {
+		response.Error(c, 500, "Failed to create event")
+		return
+	}
+
+	response.Created(c, gin.H{
+		"message":  "Event created",
+		"event_id": id,
+	})
 }
