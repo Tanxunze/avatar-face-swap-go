@@ -25,7 +25,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://127.0.0.1:5173"},
+		AllowOrigins:     []string{"http://127.0.0.1:5173", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -37,9 +37,15 @@ func main() {
 
 	api := router.Group("/api")
 	{
-		// Auth
+		// Auth - Token based (local admin password / event token)
 		api.POST("/verify", handler.Login)
 		api.POST("/verify-token", handler.VerifyToken)
+
+		// Auth - Keycloak SSO (matches original Python Flask routes)
+		api.GET("/login", handler.KeycloakLogin)                           // Redirect to Keycloak
+		api.GET("/auth", handler.KeycloakCallback)                         // Keycloak callback
+		api.GET("/logout", handler.KeycloakLogout)                         // Logout from Keycloak
+		api.GET("/profile", middleware.AuthRequired(), handler.GetProfile) // Get user profile
 
 		// Event
 		api.GET("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.ListEvents)

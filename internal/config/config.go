@@ -16,6 +16,14 @@ type Config struct {
 	TencentSecretID  string
 	TencentSecretKey string
 	TencentRegion    string
+
+	// Keycloak OIDC configuration
+	KeycloakClientID     string
+	KeycloakClientSecret string
+	KeycloakServerURL    string // OIDC well-known URL
+
+	// Frontend URL for redirects
+	FrontendBaseURL string
 }
 
 func Load() *Config {
@@ -33,7 +41,20 @@ func Load() *Config {
 		TencentSecretID:  getEnv("TENCENTCLOUD_SECRET_ID", ""),
 		TencentSecretKey: getEnv("TENCENTCLOUD_SECRET_KEY", ""),
 		TencentRegion:    getEnv("TENCENT_REGION", "ap-guangzhou"),
+
+		// Keycloak
+		KeycloakClientID:     getEnv("KEYCLOAK_CLIENT_ID", ""),
+		KeycloakClientSecret: getEnv("KEYCLOAK_CLIENT_SECRET", ""),
+		KeycloakServerURL:    getEnv("KEYCLOAK_SERVER_URL", ""),
+
+		// Frontend
+		FrontendBaseURL: getEnv("FRONTEND_BASE_URL", "http://localhost:5173"),
 	}
+}
+
+// IsKeycloakEnabled returns true if Keycloak is configured
+func (c *Config) IsKeycloakEnabled() bool {
+	return c.KeycloakClientID != "" && c.KeycloakClientSecret != "" && c.KeycloakServerURL != ""
 }
 
 func getEnv(key, defaultValue string) string {
