@@ -47,6 +47,19 @@ func main() {
 		api.POST("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.CreateEvent)
 		api.PUT("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.UpdateEvent)
 		api.DELETE("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.DeleteEvent)
+
+		// File routes
+		api.GET("/events/:id/pic", middleware.AuthRequired(), handler.GetEventPic)
+		api.GET("/events/:id/faces", middleware.AuthRequired(), handler.GetEventFaces)
+		api.GET("/events/:id/faces/info", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventMetadata)
+		api.GET("/events/:id/faces/:filename", middleware.AuthRequired(), handler.GetFaceImage)
+		api.POST("/events/:id/upload-pic", middleware.AuthRequired(), middleware.AdminRequired(), handler.UploadEventPic)
+		api.POST("/upload/:id/:face", middleware.AuthRequired(), handler.UploadAvatar)
+
+		// qq
+		api.GET("/events/:id/qq-nickname/:qq", middleware.AuthRequired(), handler.GetQQNickname)
+		api.POST("/upload-qq-avatar/:id/:face", middleware.AuthRequired(), handler.UploadQQAvatar)
+		api.GET("/events/:id/faces/:filename/info", middleware.AuthRequired(), handler.GetFaceQQInfo)
 	}
 
 	log.Printf("Server starting on :%s", cfg.Port)
