@@ -159,9 +159,24 @@ func UploadEventPic(c *gin.Context) {
 		"filename": file.Filename,
 	})
 
-	response.Success(c, gin.H{
-		"message":  "Image uploaded",
-		"event_id": eventID,
+	// Async face detection
+	go func() {
+		if err := service.ProcessEventImage(eventID, destPath); err != nil {
+			fmt.Printf("Face detection failed for event %d: %v\n", eventID, err)
+			service.LogActivity("ERROR", "图片处理", "人脸识别失败", "", strconv.Itoa(eventID), "", map[string]any{
+				"error": err.Error(),
+			})
+		} else {
+			service.LogActivity("INFO", "图片处理", "人脸识别完成", "", strconv.Itoa(eventID), "", nil)
+		}
+	}()
+
+	c.JSON(202, gin.H{
+		"success": true,
+		"data": gin.H{
+			"message":  "Image uploaded, processing faces",
+			"event_id": eventID,
+		},
 	})
 }
 
