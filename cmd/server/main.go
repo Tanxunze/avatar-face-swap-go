@@ -52,10 +52,12 @@ func main() {
 
 		// File
 		api.GET("/events/:id/pic", middleware.AuthRequired(), handler.GetEventPic)
+		api.GET("/events/:id/pic/info", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventPicInfo)
 		api.GET("/events/:id/faces", middleware.AuthRequired(), handler.GetEventFaces)
 		api.GET("/events/:id/faces/info", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventMetadata)
 		api.GET("/events/:id/faces/:filename", middleware.AuthRequired(), handler.GetFaceImage)
 		api.POST("/events/:id/upload-pic", middleware.AuthRequired(), middleware.AdminRequired(), handler.UploadEventPic)
+		api.POST("/events/:id/faces/add-manual", middleware.AuthRequired(), middleware.AdminRequired(), handler.AddManualFace)
 		api.POST("/upload/:id/:face", middleware.AuthRequired(), handler.UploadAvatar)
 		api.GET("/events/:id/faces/upload/:filename", middleware.AuthRequired(), handler.GetUploadedAvatar)
 		api.DELETE("/events/:id/faces/:filename", middleware.AuthRequired(), middleware.AdminRequired(), handler.DeleteFace)
