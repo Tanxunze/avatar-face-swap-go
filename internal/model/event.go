@@ -15,3 +15,10 @@ type CreateEventRequest struct {
 	EventDate   string `json:"event_date" binding:"required"`
 	IsOpen      bool   `json:"is_open"`
 }
+
+type UpdateEventRequest struct {
+	Description string `json:"description" binding:"required"`
+	Token       string `json:"token" binding:"required"`
+	EventDate   string `json:"event_date" binding:"required"`
+	IsOpen      bool   `json:"is_open"`
+}

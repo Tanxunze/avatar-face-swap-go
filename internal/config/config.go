@@ -1,6 +1,11 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	Port          string
@@ -11,6 +16,11 @@ type Config struct {
 }
 
 func Load() *Config {
+	// Load .env file (ignore error if not exists)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment")
+	}
+
 	return &Config{
 		Port:          getEnv("PORT", "5001"),
 		JWTSecret:     getEnv("JWT_SECRET", "dev-secret-key"),

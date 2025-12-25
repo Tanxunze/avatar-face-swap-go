@@ -6,6 +6,9 @@ import (
 	"avatar-face-swap-go/internal/config"
 	"avatar-face-swap-go/internal/database"
 	"avatar-face-swap-go/internal/handler"
+	"avatar-face-swap-go/internal/middleware"
+
+	"github.com/gin-contrib/cors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,15 +24,27 @@ func main() {
 
 	router := gin.Default()
 
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://127.0.0.1:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "OK"})
 	})
 
 	api := router.Group("/api")
 	{
-		api.GET("/events", handler.ListEvents)
-		api.GET("/events/:id", handler.GetEvent)
-		api.POST("/events", handler.CreateEvent)
+		// Auth routes
+		api.POST("/verify", handler.Login)
+		api.POST("/verify-token", handler.VerifyToken)
+
+		// Event routes
+		api.GET("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.ListEvents)
+		api.GET("/events/:id", middleware.AuthRequired(), handler.GetEvent)
+		api.POST("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.CreateEvent)
 	}
 
 	log.Printf("Server starting on :%s", cfg.Port)

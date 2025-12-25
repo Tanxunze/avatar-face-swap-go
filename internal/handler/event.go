@@ -50,9 +50,10 @@ func CreateEvent(c *gin.Context) {
 		return
 	}
 
-	creator := ""
-	id, err := repository.CreateEvent(&req, creator)
+	creator, _ := c.Get("user_email")
+	creatorStr, _ := creator.(string)
 
+	id, err := repository.CreateEvent(&req, creatorStr)
 	if err != nil {
 		response.Error(c, 500, "Failed to create event")
 		return

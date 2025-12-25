@@ -79,3 +79,51 @@ func CreateEvent(req *model.CreateEventRequest, creator string) (int64, error) {
 
 	return result.LastInsertId()
 }
+
+func GetEventByToken(token string) (*model.Event, error) {
+	query := `SELECT event_id, description, token, event_date, is_open, creator 
+              FROM event WHERE token = ?`
+
+	var event model.Event
+	var creator sql.NullString
+
+	err := database.DB.QueryRow(query, token).Scan(
+		&event.ID,
+		&event.Description,
+		&event.Token,
+		&event.EventDate,
+		&event.IsOpen,
+		&creator,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if creator.Valid {
+		event.Creator = creator.String
+	}
+
+	return &event, nil
+}
+
+func UpdateEvent(id int, req *model.UpdateEventRequest) error {
+	query := `UPDATE event SET description = ?, token = ?, event_date = ?, is_open = ? 
+              WHERE event_id = ?`
+
+	isOpen := 0
+	if req.IsOpen {
+		isOpen = 1
+	}
+
+	_, err := database.DB.Exec(query, req.Description, req.Token, req.EventDate, isOpen, id)
+	return err
+}
+
+func DeleteEvent(id int) error {
+	_, err := database.DB.Exec("DELETE FROM event WHERE event_id = ?", id)
+	return err
+}
