@@ -125,32 +125,35 @@ func UploadEventPic(c *gin.Context) {
 		return
 	}
 
-	// Get uploaded file
 	file, err := c.FormFile("file")
 	if err != nil {
 		response.Error(c, 400, "No file uploaded")
 		return
 	}
 
-	// Validate file type
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
 		response.Error(c, 400, "Only jpg, jpeg, png allowed")
 		return
 	}
 
-	// Ensure directories exist
 	if err := storage.EnsureEventDirs(eventID); err != nil {
 		response.Error(c, 500, "Failed to create directories")
 		return
 	}
 
-	// Save file
 	destPath := storage.GetOriginalPath(eventID)
 	if err := c.SaveUploadedFile(file, destPath); err != nil {
 		response.Error(c, 500, "Failed to save file")
 		return
 	}
+
+	userEmail, _ := c.Get("user_email")
+	userEmailStr, _ := userEmail.(string)
+
+	service.LogActivity("INFO", "活动管理", "上传活动图片", userEmailStr, strconv.Itoa(eventID), c.ClientIP(), map[string]any{
+		"filename": file.Filename,
+	})
 
 	response.Success(c, gin.H{
 		"message":  "Image uploaded",
@@ -177,7 +180,6 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Validate file type
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
 		response.Error(c, 400, "Only jpg, jpeg, png allowed")
@@ -189,7 +191,6 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Save with face name
 	baseName := face[:len(face)-len(filepath.Ext(face))]
 	destPath := storage.GetAvatarPath(eventID, baseName+ext)
 
@@ -242,7 +243,11 @@ func UploadQQAvatar(c *gin.Context) {
 		return
 	}
 
-	// asynchronous
+	service.LogActivity("INFO", "图片处理", "上传QQ头像", "", strconv.Itoa(eventID), c.ClientIP(), map[string]any{
+		"face":      face,
+		"qq_number": req.QQNumber,
+	})
+
 	go func() {
 		if err := service.DownloadQQAvatar(eventID, face, req.QQNumber); err != nil {
 			fmt.Printf("Failed to download QQ avatar: %v\n", err)
@@ -289,4 +294,110 @@ func GetFaceQQInfo(c *gin.Context) {
 
 	info["filename"] = filename
 	response.Success(c, info)
+}
+
+func GetUploadedAvatar(c *gin.Context) {
+	eventID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	filename := c.Param("filename")
+	if filepath.Base(filename) != filename {
+		response.Error(c, 400, "Invalid filename")
+		return
+	}
+
+	avatarPath := storage.GetAvatarPath(eventID, filename)
+
+	if _, err := os.Stat(avatarPath); os.IsNotExist(err) {
+		response.Error(c, 404, "Avatar not found")
+		return
+	}
+
+	c.File(avatarPath)
+}
+
+func DeleteFace(c *gin.Context) {
+	eventID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	filename := c.Param("filename")
+	if filepath.Base(filename) != filename {
+		response.Error(c, 400, "Invalid filename")
+		return
+	}
+
+	baseName := filename[:len(filename)-len(filepath.Ext(filename))]
+
+	// Delete face image
+	facePath := storage.GetFacePath(eventID, filename)
+	if err := os.Remove(facePath); err != nil && !os.IsNotExist(err) {
+		response.Error(c, 500, "Failed to delete face image")
+		return
+	}
+
+	// Delete associated avatar (try all extensions)
+	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
+		avatarPath := storage.GetAvatarPath(eventID, baseName+ext)
+		os.Remove(avatarPath)
+	}
+
+	// Delete associated JSON
+	jsonPath := storage.GetAvatarPath(eventID, baseName+".json")
+	os.Remove(jsonPath)
+
+	// Update metadata.json
+	if err := removeFaceFromMetadata(eventID, filename); err != nil {
+		fmt.Printf("Warning: failed to update metadata: %v\n", err)
+	}
+
+	userEmail, _ := c.Get("user_email")
+	userEmailStr, _ := userEmail.(string)
+
+	service.LogActivity("WARNING", "活动管理", "删除误识别人脸", userEmailStr, strconv.Itoa(eventID), c.ClientIP(), map[string]any{
+		"deleted_face": filename,
+	})
+
+	response.Success(c, gin.H{"message": "Face deleted"})
+}
+
+func removeFaceFromMetadata(eventID int, filename string) error {
+	metadataPath := storage.GetMetadataPath(eventID)
+
+	data, err := os.ReadFile(metadataPath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	var metadata map[string]any
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		return err
+	}
+
+	if faces, ok := metadata["faces"].([]any); ok {
+		var filtered []any
+		for _, f := range faces {
+			if face, ok := f.(map[string]any); ok {
+				if face["filename"] != filename {
+					filtered = append(filtered, face)
+				}
+			}
+		}
+		metadata["faces"] = filtered
+	}
+
+	updated, err := json.MarshalIndent(metadata, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(metadataPath, updated, 0644)
 }

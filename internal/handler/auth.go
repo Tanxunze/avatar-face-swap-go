@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"strconv"
+
 	"avatar-face-swap-go/internal/config"
 	"avatar-face-swap-go/internal/model"
 	"avatar-face-swap-go/internal/repository"
 	"avatar-face-swap-go/internal/service"
 	"avatar-face-swap-go/pkg/response"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +29,9 @@ func Login(c *gin.Context) {
 			response.Error(c, 500, "Failed to generate token")
 			return
 		}
+
+		service.LogActivity("INFO", "用户认证", "管理员登录", "local_admin", "", c.ClientIP(), nil)
+
 		response.Success(c, model.LoginResponse{
 			EventID: "admin",
 			Token:   jwtToken,
@@ -58,6 +62,8 @@ func Login(c *gin.Context) {
 		response.Error(c, 500, "Failed to generate token")
 		return
 	}
+
+	service.LogActivity("INFO", "用户认证", "用户登录", "", formatEventID(event.ID), c.ClientIP(), nil)
 
 	response.Success(c, model.LoginResponse{
 		EventID:     formatEventID(event.ID),

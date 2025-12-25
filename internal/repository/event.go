@@ -8,7 +8,7 @@ import (
 	"avatar-face-swap-go/internal/model"
 )
 
-func GetEventById(id int) (*model.Event, error) {
+func GetEventByID(id int) (*model.Event, error) {
 	query := `SELECT event_id, description, token, event_date, is_open, creator 
               FROM event WHERE event_id = ?`
 	var event model.Event

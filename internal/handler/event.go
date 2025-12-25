@@ -1,10 +1,15 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
 	"strconv"
 
 	"avatar-face-swap-go/internal/model"
 	"avatar-face-swap-go/internal/repository"
+	"avatar-face-swap-go/internal/service"
+	"avatar-face-swap-go/internal/storage"
 	"avatar-face-swap-go/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +22,7 @@ func GetEvent(c *gin.Context) {
 		response.Error(c, 400, "Invalid event ID")
 		return
 	}
-	event, err := repository.GetEventById(id)
+	event, err := repository.GetEventByID(id)
 	if err != nil {
 		response.Error(c, 500, "Database error")
 		return
@@ -59,6 +64,10 @@ func CreateEvent(c *gin.Context) {
 		return
 	}
 
+	service.LogActivity("INFO", "活动管理", "创建活动", creatorStr, strconv.FormatInt(id, 10), c.ClientIP(), map[string]any{
+		"description": req.Description,
+	})
+
 	response.Created(c, gin.H{
 		"message":  "Event created",
 		"event_id": id,
@@ -79,8 +88,7 @@ func UpdateEvent(c *gin.Context) {
 		return
 	}
 
-	// Check if event exists
-	event, err := repository.GetEventById(id)
+	event, err := repository.GetEventByID(id)
 	if err != nil {
 		response.Error(c, 500, "Database error")
 		return
@@ -95,6 +103,11 @@ func UpdateEvent(c *gin.Context) {
 		return
 	}
 
+	userEmail, _ := c.Get("user_email")
+	userEmailStr, _ := userEmail.(string)
+
+	service.LogActivity("INFO", "活动管理", "更新活动", userEmailStr, idStr, c.ClientIP(), nil)
+
 	response.Success(c, gin.H{"message": "Event updated"})
 }
 
@@ -106,8 +119,7 @@ func DeleteEvent(c *gin.Context) {
 		return
 	}
 
-	// Check if event exists
-	event, err := repository.GetEventById(id)
+	event, err := repository.GetEventByID(id)
 	if err != nil {
 		response.Error(c, 500, "Database error")
 		return
@@ -122,5 +134,68 @@ func DeleteEvent(c *gin.Context) {
 		return
 	}
 
+	userEmail, _ := c.Get("user_email")
+	userEmailStr, _ := userEmail.(string)
+
+	service.LogActivity("WARNING", "活动管理", "删除活动", userEmailStr, idStr, c.ClientIP(), nil)
+
 	response.Success(c, gin.H{"message": "Event deleted"})
+}
+
+func GetEventToken(c *gin.Context) {
+	eventID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	event, err := repository.GetEventByID(eventID)
+	if err != nil {
+		response.Error(c, 500, "Database error")
+		return
+	}
+
+	if event == nil {
+		response.Error(c, 404, "Event not found")
+		return
+	}
+
+	response.Success(c, gin.H{"token": event.Token})
+}
+
+func GetProcessStatus(c *gin.Context) {
+	eventID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	metadataPath := storage.GetMetadataPath(eventID)
+	originalPath := storage.GetOriginalPath(eventID)
+
+	if data, err := os.ReadFile(metadataPath); err == nil {
+		var metadata map[string]any
+		if err := json.Unmarshal(data, &metadata); err == nil {
+			facesCount := 0
+			if faces, ok := metadata["faces"].([]any); ok {
+				facesCount = len(faces)
+			}
+			response.Success(c, gin.H{
+				"status":      "completed",
+				"faces_count": facesCount,
+				"message":     fmt.Sprintf("Processing completed, %d faces detected", facesCount),
+			})
+			return
+		}
+	}
+
+	if _, err := os.Stat(originalPath); err == nil {
+		response.Success(c, gin.H{
+			"status":  "processing",
+			"message": "Processing in progress",
+		})
+		return
+	}
+
+	response.Error(c, 404, "No image uploaded")
 }
