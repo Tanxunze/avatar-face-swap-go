@@ -45,6 +45,8 @@ func main() {
 		api.GET("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.ListEvents)
 		api.GET("/events/:id", middleware.AuthRequired(), handler.GetEvent)
 		api.POST("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.CreateEvent)
+		api.PUT("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.UpdateEvent)
+		api.DELETE("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.DeleteEvent)
 	}
 
 	log.Printf("Server starting on :%s", cfg.Port)

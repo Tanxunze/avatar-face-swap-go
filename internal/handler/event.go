@@ -64,3 +64,63 @@ func CreateEvent(c *gin.Context) {
 		"event_id": id,
 	})
 }
+
+func UpdateEvent(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	var req model.UpdateEventRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, "Invalid request: "+err.Error())
+		return
+	}
+
+	// Check if event exists
+	event, err := repository.GetEventById(id)
+	if err != nil {
+		response.Error(c, 500, "Database error")
+		return
+	}
+	if event == nil {
+		response.Error(c, 404, "Event not found")
+		return
+	}
+
+	if err := repository.UpdateEvent(id, &req); err != nil {
+		response.Error(c, 500, "Failed to update event")
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Event updated"})
+}
+
+func DeleteEvent(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		response.Error(c, 400, "Invalid event ID")
+		return
+	}
+
+	// Check if event exists
+	event, err := repository.GetEventById(id)
+	if err != nil {
+		response.Error(c, 500, "Database error")
+		return
+	}
+	if event == nil {
+		response.Error(c, 404, "Event not found")
+		return
+	}
+
+	if err := repository.DeleteEvent(id); err != nil {
+		response.Error(c, 500, "Failed to delete event")
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Event deleted"})
+}

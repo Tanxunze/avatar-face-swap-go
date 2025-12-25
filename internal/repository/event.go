@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 
 	"avatar-face-swap-go/internal/database"
 	"avatar-face-swap-go/internal/model"
@@ -111,15 +112,38 @@ func GetEventByToken(token string) (*model.Event, error) {
 }
 
 func UpdateEvent(id int, req *model.UpdateEventRequest) error {
-	query := `UPDATE event SET description = ?, token = ?, event_date = ?, is_open = ? 
-              WHERE event_id = ?`
+	var fields []string
+	var args []any
 
-	isOpen := 0
-	if req.IsOpen {
-		isOpen = 1
+	if req.Description != nil {
+		fields = append(fields, "description = ?")
+		args = append(args, *req.Description)
+	}
+	if req.Token != nil {
+		fields = append(fields, "token = ?")
+		args = append(args, *req.Token)
+	}
+	if req.EventDate != nil {
+		fields = append(fields, "event_date = ?")
+		args = append(args, *req.EventDate)
+	}
+	if req.IsOpen != nil {
+		isOpen := 0
+		if *req.IsOpen {
+			isOpen = 1
+		}
+		fields = append(fields, "is_open = ?")
+		args = append(args, isOpen)
 	}
 
-	_, err := database.DB.Exec(query, req.Description, req.Token, req.EventDate, isOpen, id)
+	if len(fields) == 0 {
+		return nil
+	}
+
+	query := "UPDATE event SET " + strings.Join(fields, ", ") + " WHERE event_id = ?"
+	args = append(args, id)
+
+	_, err := database.DB.Exec(query, args...)
 	return err
 }
 

@@ -17,8 +17,8 @@ type CreateEventRequest struct {
 }
 
 type UpdateEventRequest struct {
-	Description string `json:"description" binding:"required"`
-	Token       string `json:"token" binding:"required"`
-	EventDate   string `json:"event_date" binding:"required"`
-	IsOpen      bool   `json:"is_open"`
+	Description *string `json:"description"`
+	Token       *string `json:"token"`
+	EventDate   *string `json:"event_date"`
+	IsOpen      *bool   `json:"is_open"`
 }
