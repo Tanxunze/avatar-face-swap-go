@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Data
+data/
+*.db
+*.sqlite3
+
+# Build
+bin/
+dist/
+*.exe
+
+# Dependencies
+vendor/
+
+# Documentation
+*.md
+
+# Testing
+*_test.go
+coverage.out
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Nginx
+nginx/
