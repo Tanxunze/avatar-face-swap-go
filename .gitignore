@@ -36,3 +36,9 @@ Thumbs.db
 
 tmp/
 data/
+
+# Nginx
+nginx/ssl/*.pem
+nginx/ssl/*.crt
+nginx/ssl/*.key
+nginx/logs/

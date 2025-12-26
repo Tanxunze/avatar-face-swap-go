@@ -1,35 +1,38 @@
 # Avatar Face Swap - Go Backend
 
-A Go rewrite of the Flask backend for the Avatar Face Swap application.
+A Go version backend for the [Avatar Face Swap](https://github.com/ZhaoKuanhong/avatar-face-swap) project.
 
 ## Project Structure
 
 ```
 .
-├── cmd/
-│   └── server/
-│       └── main.go          # Application entry point
+├── cmd/server/          # Application entry point
 ├── internal/
-│   ├── handler/             # HTTP handlers (routes)
-│   ├── middleware/          # Auth and other middleware
-│   ├── model/               # Data models
-│   ├── repository/          # Database operations
-│   └── service/             # Business logic
-├── configs/                 # Configuration files
-├── go.mod
-└── go.sum
+│   ├── config/          # Configuration loading
+│   ├── database/        # Database initialization
+│   ├── handler/         # HTTP handlers (routes)
+│   ├── middleware/      # Auth middleware
+│   ├── model/           # Data models
+│   ├── repository/      # Database operations
+│   ├── service/         # Business logic
+│   └── storage/         # File storage utilities
+├── pkg/response/        # Shared response utilities
+├── nginx/               # Nginx configuration
+└── data/                # SQLite DB + file storage (gitignored)
 ```
 
 ## Development
 
 ```bash
-# Run the server
+# Copy environment file
+cp .env.example .env
+
+# Run with hot reload (requires air)
+air
+
+# Or run directly
 go run cmd/server/main.go
 
 # Build
-go build -o bin/server.exe cmd/server/main.go
+go build -o bin/server cmd/server/main.go
 ```
-
-## API Endpoints
-
-TBD - migrating from Flask backend.
