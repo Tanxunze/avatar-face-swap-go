@@ -16,7 +16,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// POST /api/verify
+// POST /api/auth/sessions
+// Creates a new session (login with admin password or event token)
 func Login(c *gin.Context) {
 	var req model.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -76,7 +77,8 @@ func Login(c *gin.Context) {
 	})
 }
 
-// POST /api/verify-token
+// POST /api/auth/tokens/verify
+// Verifies a JWT token and returns user info
 func VerifyToken(c *gin.Context) {
 	var req struct {
 		Token string `json:"token" binding:"required"`
@@ -107,7 +109,7 @@ func formatEventID(id int) string {
 // ==================== Keycloak SSO Authentication ====================
 // These endpoints match the original Python Flask implementation
 
-// GET /api/login
+// GET /api/auth/sso/login
 // Redirects user to Keycloak for SSO authentication
 func KeycloakLogin(c *gin.Context) {
 	keycloak := service.GetKeycloakService()
@@ -125,7 +127,7 @@ func KeycloakLogin(c *gin.Context) {
 	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
 		scheme = "https"
 	}
-	redirectURI := fmt.Sprintf("%s://%s/api/auth", scheme, c.Request.Host)
+	redirectURI := fmt.Sprintf("%s://%s/api/auth/sso/callback", scheme, c.Request.Host)
 
 	authURL, err := keycloak.GetAuthorizationURL(ctx, redirectURI, "")
 	if err != nil {
@@ -137,7 +139,7 @@ func KeycloakLogin(c *gin.Context) {
 	c.Redirect(302, authURL)
 }
 
-// GET /api/auth
+// GET /api/auth/sso/callback
 // Keycloak callback handler - exchanges code for tokens and redirects to frontend
 func KeycloakCallback(c *gin.Context) {
 	keycloak := service.GetKeycloakService()
@@ -168,7 +170,7 @@ func KeycloakCallback(c *gin.Context) {
 	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
 		scheme = "https"
 	}
-	redirectURI := fmt.Sprintf("%s://%s/api/auth", scheme, c.Request.Host)
+	redirectURI := fmt.Sprintf("%s://%s/api/auth/sso/callback", scheme, c.Request.Host)
 
 	// Exchange code for tokens
 	tokenResp, err := keycloak.ExchangeCode(ctx, code, redirectURI)
@@ -211,7 +213,7 @@ func KeycloakCallback(c *gin.Context) {
 	c.Redirect(302, redirectURL)
 }
 
-// GET /api/logout
+// DELETE /api/auth/sessions/current
 // Logout from Keycloak and redirect to frontend
 func KeycloakLogout(c *gin.Context) {
 	keycloak := service.GetKeycloakService()
@@ -236,8 +238,8 @@ func KeycloakLogout(c *gin.Context) {
 	c.Redirect(302, logoutURL)
 }
 
-// GET /api/profile
-// Returns the current user's profile from session (Keycloak integration)
+// GET /api/auth/profile
+// Returns the current user's profile
 func GetProfile(c *gin.Context) {
 	// In the Go implementation, we use JWT instead of session
 	// This endpoint is called by frontend to check if user is logged in via SSO

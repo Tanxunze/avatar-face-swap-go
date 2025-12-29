@@ -44,14 +44,17 @@ func main() {
 	api := router.Group("/api")
 	{
 		// Auth - Token based (local admin password / event token)
-		api.POST("/verify", handler.Login)
-		api.POST("/verify-token", handler.VerifyToken)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/sessions", handler.Login)           // Create session (login)
+			auth.POST("/tokens/verify", handler.VerifyToken) // Verify JWT token
 
-		// Auth - Keycloak SSO (matches original Python Flask routes)
-		api.GET("/login", handler.KeycloakLogin)                           // Redirect to Keycloak
-		api.GET("/auth", handler.KeycloakCallback)                         // Keycloak callback
-		api.GET("/logout", handler.KeycloakLogout)                         // Logout from Keycloak
-		api.GET("/profile", middleware.AuthRequired(), handler.GetProfile) // Get user profile
+			// SSO (Keycloak)
+			auth.GET("/sso/login", handler.KeycloakLogin)       // Redirect to Keycloak
+			auth.GET("/sso/callback", handler.KeycloakCallback) // Keycloak callback
+			auth.DELETE("/sessions/current", handler.KeycloakLogout) // Logout
+			auth.GET("/profile", middleware.AuthRequired(), handler.GetProfile) // Get user profile
+		}
 
 		// Event
 		api.GET("/events", middleware.AuthRequired(), middleware.AdminRequired(), handler.ListEvents)
@@ -60,24 +63,26 @@ func main() {
 		api.PUT("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.UpdateEvent)
 		api.DELETE("/events/:id", middleware.AuthRequired(), middleware.AdminRequired(), handler.DeleteEvent)
 		api.GET("/events/:id/token", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventToken)
-		api.GET("/events/:id/process-status", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetProcessStatus)
+		api.GET("/events/:id/status", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetProcessStatus) // Get face detection status
 
-		// File
-		api.GET("/events/:id/pic", middleware.AuthRequired(), handler.GetEventPic)
-		api.GET("/events/:id/pic/info", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventPicInfo)
-		api.GET("/events/:id/faces", middleware.AuthRequired(), handler.GetEventFaces)
-		api.GET("/events/:id/faces/info", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventMetadata)
-		api.GET("/events/:id/faces/:filename", middleware.AuthRequired(), handler.GetFaceImage)
-		api.POST("/events/:id/upload-pic", middleware.AuthRequired(), middleware.AdminRequired(), handler.UploadEventPic)
-		api.POST("/events/:id/faces/add-manual", middleware.AuthRequired(), middleware.AdminRequired(), handler.AddManualFace)
-		api.POST("/upload/:id/:face", middleware.AuthRequired(), handler.UploadAvatar)
-		api.GET("/events/:id/faces/upload/:filename", middleware.AuthRequired(), handler.GetUploadedAvatar)
+		// Picture (event main image)
+		api.GET("/events/:id/picture", middleware.AuthRequired(), handler.GetEventPic)                                       // Get event picture
+		api.GET("/events/:id/picture/metadata", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventPicInfo) // Get picture metadata
+		api.PUT("/events/:id/picture", middleware.AuthRequired(), middleware.AdminRequired(), handler.UploadEventPic)        // Upload/replace event picture
+
+		// Faces
+		api.GET("/events/:id/faces", middleware.AuthRequired(), handler.GetEventFaces)                                           // List faces
+		api.GET("/events/:id/faces/metadata", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetEventMetadata)   // Get faces metadata
+		api.GET("/events/:id/faces/:filename", middleware.AuthRequired(), handler.GetFaceImage)                                  // Get face image
+		api.POST("/events/:id/faces", middleware.AuthRequired(), middleware.AdminRequired(), handler.AddManualFace)              // Add manual face
+		api.POST("/events/:id/faces/:face/avatar", middleware.AuthRequired(), handler.UploadAvatar)       // Upload avatar for a face
+		api.GET("/events/:id/avatars/:filename", middleware.AuthRequired(), handler.GetUploadedAvatar)    // Get uploaded avatar
 		api.DELETE("/events/:id/faces/:filename", middleware.AuthRequired(), middleware.AdminRequired(), handler.DeleteFace)
 
-		// qq
-		api.GET("/events/:id/qq-nickname/:qq", middleware.AuthRequired(), handler.GetQQNickname)
-		api.POST("/upload-qq-avatar/:id/:face", middleware.AuthRequired(), handler.UploadQQAvatar)
-		api.GET("/events/:id/faces/:filename/info", middleware.AuthRequired(), handler.GetFaceQQInfo)
+		// QQ integration
+		api.GET("/events/:id/qq-profiles/:qq", middleware.AuthRequired(), handler.GetQQNickname)              // Get QQ nickname
+		api.POST("/events/:id/faces/:face/qq-avatar", middleware.AuthRequired(), handler.UploadQQAvatar)      // Upload QQ avatar for a face
+		api.GET("/events/:id/faces/:filename/qq-profile", middleware.AuthRequired(), handler.GetFaceQQInfo)   // Get QQ info for a face
 
 		// log
 		api.GET("/logs", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetLogs)

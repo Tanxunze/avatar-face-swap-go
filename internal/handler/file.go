@@ -19,6 +19,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GET /api/events/:id/picture
+// Returns the main event picture
 func GetEventPic(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -94,6 +96,8 @@ func GetFaceImage(c *gin.Context) {
 	c.File(facePath)
 }
 
+// GET /api/events/:id/faces/metadata
+// Returns metadata for all detected faces
 func GetEventMetadata(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -122,6 +126,8 @@ func GetEventMetadata(c *gin.Context) {
 	response.Success(c, metadata)
 }
 
+// PUT /api/events/:id/picture
+// Uploads or replaces the main event picture (triggers face detection)
 func UploadEventPic(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -180,6 +186,8 @@ func UploadEventPic(c *gin.Context) {
 	})
 }
 
+// POST /api/events/:id/faces/:face/avatar
+// Uploads a custom avatar image for a specific face
 func UploadAvatar(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -224,6 +232,8 @@ func UploadAvatar(c *gin.Context) {
 	})
 }
 
+// GET /api/events/:id/qq-profiles/:qq
+// Returns QQ nickname for a given QQ number
 func GetQQNickname(c *gin.Context) {
 	qqNumber := c.Param("qq")
 
@@ -245,6 +255,8 @@ func GetQQNickname(c *gin.Context) {
 	})
 }
 
+// POST /api/events/:id/faces/:face/qq-avatar
+// Downloads QQ avatar and saves it for a specific face
 func UploadQQAvatar(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -273,9 +285,11 @@ func UploadQQAvatar(c *gin.Context) {
 		}
 	}()
 
-	response.Success(c, gin.H{"message": "Avatar upload started"})
+	response.Success(c, gin.H{"message": "头像上传完成"})
 }
 
+// GET /api/events/:id/faces/:filename/qq-profile
+// Returns QQ profile info associated with a face
 func GetFaceQQInfo(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -315,6 +329,8 @@ func GetFaceQQInfo(c *gin.Context) {
 	response.Success(c, info)
 }
 
+// GET /api/events/:id/avatars/:filename
+// Returns an uploaded avatar image
 func GetUploadedAvatar(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -385,6 +401,8 @@ func DeleteFace(c *gin.Context) {
 	response.Success(c, gin.H{"message": "Face deleted"})
 }
 
+// GET /api/events/:id/picture/metadata
+// Returns metadata about the event picture (dimensions, etc.)
 func GetEventPicInfo(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -422,6 +440,8 @@ func GetEventPicInfo(c *gin.Context) {
 	})
 }
 
+// POST /api/events/:id/faces
+// Manually adds a face by specifying coordinates to crop from the main picture
 func AddManualFace(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

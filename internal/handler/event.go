@@ -163,6 +163,8 @@ func GetEventToken(c *gin.Context) {
 	response.Success(c, gin.H{"token": event.Token})
 }
 
+// GET /api/events/:id/status
+// Returns the face detection processing status for an event
 func GetProcessStatus(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
