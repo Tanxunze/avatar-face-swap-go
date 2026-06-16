@@ -150,29 +150,48 @@ openssl rand -hex 32
 
 ### API Endpoints
 
+> This list reflects the actual RESTful routes in `cmd/server/main.go`. The single
+> source of truth shared with the Python backend and frontend is
+
 #### Authentication
 
-- `POST /api/verify` - Admin/token login
-- `POST /api/verify-token` - Verify JWT token
-- `GET /api/login` - Keycloak SSO login
-- `GET /api/auth` - Keycloak callback
-- `GET /api/logout` - Keycloak logout
-- `GET /api/profile` - Get user profile
+- `POST /api/auth/sessions` - Login (admin password / event token)
+- `POST /api/auth/tokens/verify` - Verify JWT token
+- `GET /api/auth/sso/login` - Keycloak SSO login (redirect)
+- `GET /api/auth/sso/callback` - Keycloak callback
+- `DELETE /api/auth/sessions/current` - Logout
+- `GET /api/auth/profile` - Get user profile
 
-#### Event Management (Admin only)
+#### Event Management
 
-- `GET /api/events` - List all events
-- `POST /api/events` - Create event
-- `PUT /api/events/:id` - Update event
-- `DELETE /api/events/:id` - Delete event
-- `GET /api/events/:id/token` - Get event access token
+- `GET /api/events` - List all events (admin)
+- `POST /api/events` - Create event (admin)
+- `GET /api/events/:id` - Get one event
+- `PUT /api/events/:id` - Update event (admin)
+- `DELETE /api/events/:id` - Delete event (admin)
+- `GET /api/events/:id/token` - Get event access token (admin)
+- `GET /api/events/:id/status` - Face-detection processing status (admin)
 
-#### File Operations
+#### Picture & Faces
 
-- `POST /api/events/:id/upload-pic` - Upload event photo
-- `POST /api/upload/:id/:face` - Upload user avatar
-- `GET /api/events/:id/faces` - Get detected faces
-- `DELETE /api/events/:id/faces/:filename` - Delete face
+- `GET /api/events/:id/picture` - Get event photo
+- `PUT /api/events/:id/picture` - Upload/replace event photo (admin)
+- `GET /api/events/:id/picture/metadata` - Picture metadata (admin)
+- `GET /api/events/:id/faces` - List detected faces
+- `GET /api/events/:id/faces/metadata` - Faces metadata (admin)
+- `GET /api/events/:id/faces/:filename` - Get a face image
+- `POST /api/events/:id/faces` - Add a manual face (admin)
+- `DELETE /api/events/:id/faces/:filename` - Delete face (admin)
+- `POST /api/events/:id/faces/:face/avatar` - Upload a custom avatar
+- `GET /api/events/:id/avatars/:filename` - Get an uploaded avatar
+- `POST /api/events/:id/faces/:face/qq-avatar` - Fetch & set QQ avatar
+- `GET /api/events/:id/faces/:filename/qq-profile` - QQ info for a face
+- `GET /api/events/:id/qq-profiles/:qq` - QQ nickname lookup
+
+#### System
+
+- `GET /api/logs` - System logs (admin)
+- `GET /api/system/detector-status` - Face-detection backend status (admin)
 
 ---
 
@@ -322,26 +341,45 @@ openssl rand -hex 32
 
 ### API 接口
 
+> 下列为 `cmd/server/main.go` 中实际的 RESTful 路由。与 Python 后端、前端共享的
+> 单一事实来源是 [`API_CONTRACT.md`](../avatar-face-swap/API_CONTRACT.md),改接口请先同步该文件。
+
 #### 身份认证
 
-- `POST /api/verify` - 管理员/令牌登录
-- `POST /api/verify-token` - 验证 JWT 令牌
-- `GET /api/login` - Keycloak SSO 登录
-- `GET /api/auth` - Keycloak 回调
-- `GET /api/logout` - Keycloak 登出
-- `GET /api/profile` - 获取用户信息
+- `POST /api/auth/sessions` - 登录（管理员口令 / 活动口令）
+- `POST /api/auth/tokens/verify` - 验证 JWT 令牌
+- `GET /api/auth/sso/login` - Keycloak SSO 登录（跳转）
+- `GET /api/auth/sso/callback` - Keycloak 回调
+- `DELETE /api/auth/sessions/current` - 登出
+- `GET /api/auth/profile` - 获取用户信息
 
-#### 活动管理（仅管理员）
+#### 活动管理
 
-- `GET /api/events` - 列出所有活动
-- `POST /api/events` - 创建活动
-- `PUT /api/events/:id` - 更新活动
-- `DELETE /api/events/:id` - 删除活动
-- `GET /api/events/:id/token` - 获取活动访问令牌
+- `GET /api/events` - 列出所有活动（管理员）
+- `POST /api/events` - 创建活动（管理员）
+- `GET /api/events/:id` - 获取单个活动
+- `PUT /api/events/:id` - 更新活动（管理员）
+- `DELETE /api/events/:id` - 删除活动（管理员）
+- `GET /api/events/:id/token` - 获取活动访问令牌（管理员）
+- `GET /api/events/:id/status` - 人脸识别处理状态（管理员）
 
-#### 文件操作
+#### 图片与人脸
 
-- `POST /api/events/:id/upload-pic` - 上传活动照片
-- `POST /api/upload/:id/:face` - 上传用户头像
-- `GET /api/events/:id/faces` - 获取检测到的人脸
-- `DELETE /api/events/:id/faces/:filename` - 删除人脸
+- `GET /api/events/:id/picture` - 获取活动照片
+- `PUT /api/events/:id/picture` - 上传/替换活动照片（管理员）
+- `GET /api/events/:id/picture/metadata` - 照片元信息（管理员）
+- `GET /api/events/:id/faces` - 获取检测到的人脸列表
+- `GET /api/events/:id/faces/metadata` - 人脸元信息（管理员）
+- `GET /api/events/:id/faces/:filename` - 获取单张人脸图片
+- `POST /api/events/:id/faces` - 手动添加人脸（管理员）
+- `DELETE /api/events/:id/faces/:filename` - 删除人脸（管理员）
+- `POST /api/events/:id/faces/:face/avatar` - 上传自定义头像
+- `GET /api/events/:id/avatars/:filename` - 获取已上传头像
+- `POST /api/events/:id/faces/:face/qq-avatar` - 拉取并设置 QQ 头像
+- `GET /api/events/:id/faces/:filename/qq-profile` - 某张脸的 QQ 信息
+- `GET /api/events/:id/qq-profiles/:qq` - 查询 QQ 昵称
+
+#### 系统
+
+- `GET /api/logs` - 系统日志（管理员）
+- `GET /api/system/detector-status` - 人脸检测后端状态（管理员）

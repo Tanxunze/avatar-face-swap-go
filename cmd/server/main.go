@@ -86,6 +86,9 @@ func main() {
 
 		// log
 		api.GET("/logs", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetLogs)
+
+		// system
+		api.GET("/system/detector-status", middleware.AuthRequired(), middleware.AdminRequired(), handler.GetDetectorStatus)
 	}
 
 	log.Printf("Server starting on :%s", cfg.Port)
